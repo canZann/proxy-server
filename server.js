@@ -11,18 +11,19 @@ app.get('/price', async (req, res) => {
         const response = await axios.get('https://api.skinport.com/v1/items?app_id=730');
         const allItems = response.data;
 
-        const item = allItems.find(item => item.market_hash_name.toLowerCase() === name.toLowerCase());
+        const lowerName = name.toLowerCase();
+
+        // Tam eşleşme değil, kısmi eşleşme yapıyoruz
+        const item = allItems.find(item =>
+            item.market_hash_name.toLowerCase().includes(lowerName)
+        );
 
         if (item) {
             res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             res.send({ price: item.min_price });
         } else {
             res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-            res.status(200).send({ price: null }); // ürün bulunamazsa boş fiyat dön
+            res.send({ price: null });  // Ürün bulunamadıysa null dön
         }
     } catch (err) {
         console.error("Proxy server error:", err.message);
