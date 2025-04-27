@@ -13,23 +13,23 @@ app.get('/price', async (req, res) => {
 
         const lowerName = name.toLowerCase();
 
-        // Kısmi eşleşme yapıyoruz (includes)
-        const item = allItems.find(item =>
-            item.market_hash_name.toLowerCase().includes(lowerName)
-        );
+        const item = allItems.find(i => i.market_hash_name && i.market_hash_name.toLowerCase().includes(lowerName));
 
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        if (item && item.min_price) {
-            res.status(200).send({ price: item.min_price });
+        if (item) {
+            // min_price varsa döneriz
+            const price = item.min_price ? item.min_price : null;
+            res.status(200).send({ price: price });
         } else {
-            res.status(200).send({ price: null }); // Ürün bulunamadıysa boş dönüyoruz
+            // Ürün bulunamadıysa da hatasız boş döneriz
+            res.status(200).send({ price: null });
         }
 
     } catch (err) {
         console.error("Proxy server error:", err.message);
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(200).send({ price: null }); // Hata olsa bile boş veri dön
+        res.status(200).send({ price: null }); // Hata olsa bile boş fiyat dön!
     }
 });
 
