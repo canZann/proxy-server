@@ -5,41 +5,25 @@ const app = express();
 
 app.use(cors());
 
-// İsimleri temizleyen fonksiyon
-function temizle(text) {
-    return text
-        .replace(/★/g, '') // Yıldız sembolünü sil
-        .replace(/™/g, '') // TM işaretini sil
-        .replace(/[^\w\s\|\-\(\)]/g, '') // Özel karakterleri temizle
-        .toLowerCase()
-        .trim();
-}
-
+// Steam Market üzerinden fiyat çekme
 app.get('/price', async (req, res) => {
     const { name } = req.query;
     try {
-        const response = await axios.get('https://api.skinport.com/v1/items?app_id=730');
-        const allItems = response.data;
+        const response = await axios.get(`https://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=${encodeURIComponent(name)}`);
 
-        const cleanedQueryName = temizle(name);
-
-        const item = allItems.find(i => {
-            const cleanedItemName = temizle(i.market_hash_name);
-            return cleanedItemName.includes(cleanedQueryName);
-        });
-
-        res.setHeader('Access-Control-Allow-Origin', '*');
-
-        if (item && item.min_price) {
-            res.status(200).send({ price: item.min_price });
+        if (response.data && response.data.success) {
+            const lowestPrice = response.data.lowest_price || null; // en düşük satış fiyatı
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.status(200).send({ price: lowestPrice });
         } else {
-            res.status(200).send({ price: null });
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.status(200).send({ price: null }); // ürün bulunamadı
         }
 
     } catch (err) {
         console.error("Proxy server error:", err.message);
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(200).send({ price: null });
+        res.status(200).send({ price: null }); // hata olursa da boş dön
     }
 });
 
